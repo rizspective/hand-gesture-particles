@@ -1,5 +1,7 @@
 # Hand Gesture Particles
 
+Live demo: https://rizspective.github.io/hand-gesture-particles/
+
 A browser-based particle effects playground controlled by hand gestures, using your webcam.
 Vanilla HTML/CSS/JS, no build step — hand tracking runs via [MediaPipe Hands](https://developers.google.com/mediapipe) loaded from a CDN, rendering happens on an HTML5 canvas layered over the live camera feed.
 
