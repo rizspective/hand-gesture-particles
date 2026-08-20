@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hand Gesture Particles</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <video id="webcam" autoplay playsinline muted></video>
+    <canvas id="output"></canvas>
+
+    <div id="loading">
+      <div class="spinner"></div>
+      <p>Loading hand tracking model&hellip;</p>
+    </div>
+
+    <div id="status-panel">
+      <div class="status-row"><span class="label">Camera:</span> <span id="status-camera">inactive</span></div>
+      <div class="status-row"><span class="label">Gesture:</span> <span id="status-gesture">No gesture detected</span></div>
+      <div class="status-row"><span class="label">Particles:</span> <span id="status-particles">0 / 0</span></div>
+      <div class="status-row"><span class="label">Tracking:</span> <span id="status-tracking">waiting for hand</span></div>
+      <div class="status-row"><span class="label">Mode:</span> <span id="status-mode">idle</span></div>
+
+      <div id="legend">
+        <div class="legend-title">Gestures</div>
+        <div class="legend-item">☝️ Index finger up — comet trail</div>
+        <div class="legend-item">✌️ Peace sign — firework burst</div>
+        <div class="legend-item">🫰 Finger heart — heart particles</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MediaPipe Hands (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <script src="particles.js"></script>
+  <script src="gestures.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
