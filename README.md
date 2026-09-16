@@ -2,6 +2,8 @@
 
 Live demo: https://rizspective.github.io/hand-gesture-particles/
 
+Just a fun side project, not a polished product. Built with AI assistance ([Claude Code](https://claude.com/claude-code)).
+
 A browser-based particle effects playground controlled by hand gestures, using your webcam.
 Vanilla HTML/CSS/JS, no build step — hand tracking runs via [MediaPipe Hands](https://developers.google.com/mediapipe) loaded from a CDN, rendering happens on an HTML5 canvas layered over the live camera feed.
 
@@ -16,6 +18,10 @@ Both hands are tracked and processed independently, so you can run two different
 | 🫰 Finger heart (thumb + index tips close together) | Red-pink heart particles stream from the midpoint between your fingertips, continuously while held |
 
 A gesture must be held steady for a few consecutive frames before it takes effect, to avoid flicker from single-frame misreads. Particle count is capped globally across both hands and all effects, using an object pool so nothing is allocated mid-animation.
+
+## Taking a photo
+
+The camera button at the bottom of the screen starts a 3-2-1 countdown, then captures a photo combining the live camera feed with whatever particle effect is active — the hand-tracking skeleton and the on-screen status panel are left out of the shot. The photo is shown in a preview with a save option; nothing is uploaded or stored anywhere, it only exists in the browser until you save or close it.
 
 ## Running locally
 
@@ -35,5 +41,5 @@ This is a static site — push to GitHub and enable GitHub Pages on the repo (Se
 
 ## Notes
 
-- Desktop only — this does not attempt to support mobile browsers.
-- No canvas/image export, no backend, no accounts.
+- Works on mobile browsers too, in addition to desktop.
+- No backend, no accounts — photo capture is entirely client-side.

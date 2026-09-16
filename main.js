@@ -3,6 +3,8 @@
 
 (function () {
   const videoEl = document.getElementById('webcam');
+  const skeletonEl = document.getElementById('skeleton');
+  const sctx = skeletonEl.getContext('2d');
   const canvasEl = document.getElementById('output');
   const ctx = canvasEl.getContext('2d');
   const loadingEl = document.getElementById('loading');
@@ -12,6 +14,16 @@
   const statusParticles = document.getElementById('status-particles');
   const statusTracking = document.getElementById('status-tracking');
   const statusMode = document.getElementById('status-mode');
+
+  const statusPanel = document.getElementById('status-panel');
+  const captureBtn = document.getElementById('capture-btn');
+  const countdownOverlay = document.getElementById('countdown-overlay');
+  const countdownNumber = document.getElementById('countdown-number');
+  const photoOverlay = document.getElementById('photo-overlay');
+  const photoPreview = document.getElementById('photo-preview');
+  const photoDownload = document.getElementById('photo-download');
+  const photoClose = document.getElementById('photo-close');
+  const photoHint = document.getElementById('photo-hint');
 
   const particleSystem = new ParticleSystem(MAX_PARTICLES);
 
@@ -90,12 +102,14 @@
     const left = (window.innerWidth - w) / 2;
     const top = (window.innerHeight - h) / 2;
 
-    for (const el of [videoEl, canvasEl]) {
+    for (const el of [videoEl, skeletonEl, canvasEl]) {
       el.style.width = `${w}px`;
       el.style.height = `${h}px`;
       el.style.left = `${left}px`;
       el.style.top = `${top}px`;
     }
+    skeletonEl.width = w;
+    skeletonEl.height = h;
     canvasEl.width = w;
     canvasEl.height = h;
   }
@@ -118,18 +132,20 @@
     applyLayout();
 
     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+    sctx.clearRect(0, 0, skeletonEl.width, skeletonEl.height);
 
     const hands = results.multiHandLandmarks || [];
     statusTracking.textContent = hands.length > 0 ? 'hand detected' : 'waiting for hand';
 
-    // Skeleton overlay so hand tracking is visible, drawn before particles
-    // so the effects render on top of it rather than being obscured.
+    // Skeleton overlay so hand tracking is visible, drawn on its own canvas
+    // (between the video and the particle canvas) so it's excluded from
+    // captured photos while still being visible live.
     for (const landmarks of hands) {
-      drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
+      drawConnectors(sctx, landmarks, HAND_CONNECTIONS, {
         color: 'rgba(120, 220, 255, 0.65)',
         lineWidth: 2,
       });
-      drawLandmarks(ctx, landmarks, {
+      drawLandmarks(sctx, landmarks, {
         color: 'rgba(255, 255, 255, 0.9)',
         fillColor: 'rgba(120, 220, 255, 0.9)',
         lineWidth: 1,
@@ -184,13 +200,91 @@
 
     frameTick++;
     for (const pt of emissionPoints) {
-      drawEmissionIndicator(ctx, pt.x, pt.y);
+      drawEmissionIndicator(sctx, pt.x, pt.y);
     }
 
     statusGesture.textContent = activeLabels.length ? activeLabels.join(', ') : GESTURE_LABELS.idle;
     statusMode.textContent = MODE_LABELS[displayMode];
     statusParticles.textContent = `${particleSystem.activeCount} / ${MAX_PARTICLES}`;
   }
+
+  // Photo capture: a 3-2-1 countdown hides the status panel, then composites
+  // the (manually mirrored) live video frame with the particle canvas only
+  // (the hand-skeleton overlay lives on its own canvas and is intentionally
+  // left out of the shot) and shows the result in a review overlay.
+  let captureInFlight = false;
+
+  function startCountdown() {
+    if (captureInFlight) return;
+    captureInFlight = true;
+    captureBtn.disabled = true;
+    statusPanel.classList.add('hidden');
+    countdownOverlay.classList.remove('hidden');
+
+    let n = 3;
+    countdownNumber.textContent = n;
+    const timer = setInterval(() => {
+      n--;
+      if (n > 0) {
+        countdownNumber.textContent = n;
+        countdownNumber.style.animation = 'none';
+        void countdownNumber.offsetWidth; // reflow to restart the pulse animation
+        countdownNumber.style.animation = '';
+      } else {
+        clearInterval(timer);
+        countdownOverlay.classList.add('hidden');
+        capturePhoto();
+      }
+    }, 1000);
+  }
+
+  function capturePhoto() {
+    const w = canvasEl.width;
+    const h = canvasEl.height;
+    const out = document.createElement('canvas');
+    out.width = w;
+    out.height = h;
+    const octx = out.getContext('2d');
+
+    // Video is mirrored via CSS (scaleX(-1)), which drawImage ignores, so
+    // mirror it manually here. The particle canvas is already correctly
+    // oriented (MediaPipe selfieMode bakes the mirror into landmark
+    // coordinates), so it's drawn as-is.
+    octx.save();
+    octx.translate(w, 0);
+    octx.scale(-1, 1);
+    octx.drawImage(videoEl, 0, 0, w, h);
+    octx.restore();
+
+    octx.drawImage(canvasEl, 0, 0);
+
+    showPhotoReview(out.toDataURL('image/png'));
+  }
+
+  function showPhotoReview(dataUrl) {
+    photoPreview.src = dataUrl;
+    photoDownload.href = dataUrl;
+    photoOverlay.classList.remove('hidden');
+
+    // <a download> is unreliable on iOS Safari / in-app browsers, which
+    // tend to just open the data URL instead of saving it. Long-pressing
+    // the <img> triggers the native "Save Image" option there instead.
+    const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    photoHint.classList.toggle('hidden', !isIOS);
+  }
+
+  function closePhotoReview() {
+    photoOverlay.classList.add('hidden');
+    photoPreview.src = '';
+    photoDownload.href = '#';
+    statusPanel.classList.remove('hidden');
+    captureBtn.disabled = false;
+    captureInFlight = false;
+  }
+
+  captureBtn.addEventListener('click', startCountdown);
+  photoClose.addEventListener('click', closePhotoReview);
 
   const hands = new Hands({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,

@@ -9,6 +9,7 @@
 <body>
   <div id="app">
     <video id="webcam" autoplay playsinline muted></video>
+    <canvas id="skeleton"></canvas>
     <canvas id="output"></canvas>
 
     <div id="loading">
@@ -29,6 +30,21 @@
         <div class="legend-item">✌️ Peace sign — firework burst</div>
         <div class="legend-item">🫰 Finger heart — heart particles</div>
       </div>
+    </div>
+
+    <button id="capture-btn" aria-label="Take photo">📷</button>
+
+    <div id="countdown-overlay" class="hidden">
+      <span id="countdown-number">3</span>
+    </div>
+
+    <div id="photo-overlay" class="hidden">
+      <img id="photo-preview" alt="Captured photo">
+      <div id="photo-actions">
+        <a id="photo-download" download="hand-gesture-photo.png">Save Photo</a>
+        <button id="photo-close">Close</button>
+      </div>
+      <p id="photo-hint" class="hidden">Long-press the photo to save it</p>
     </div>
   </div>
 
